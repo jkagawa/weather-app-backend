@@ -9,7 +9,12 @@ api = Blueprint('ap', __name__, url_prefix='/api')
 @token_required
 def get_locations(current_user_token):
     user_token = current_user_token.token
-    locations = SavedLocation.query.filter_by(user_token=user_token).all()
+    saved = SavedLocation.query.filter_by(user_token=user_token).all()
+    locations = []
+    for s in saved:
+        location = Location.query.filter_by(id=s.location_id).first()
+        if location:
+            locations.append(location)
     if locations:
         response = location_multi_schema.dump(locations)
         return jsonify(response)
@@ -55,12 +60,12 @@ def delete_location(current_user_token, location_id):
     return jsonify({'message' : 'Item not found'}), 404
     
 # Update user info
-@api.route('/user/<user_id>', methods = ['POST','PUT'])
+@api.route('/user', methods = ['POST','PUT'])
 @token_required
-def update_user(current_user_token, user_id):
+def update_user(current_user_token):
     user_token = current_user_token.token
-    user = User.query.get(user_id)
-    if user and user.user_token == user_token:
+    user = User.query.filter_by(token=user_token).first()
+    if user:
         user.first_name = request.json['first_name']
         db.session.commit()
         response = user_schema.dump(user)
