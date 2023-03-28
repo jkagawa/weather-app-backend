@@ -36,5 +36,6 @@ def signin():
             return jsonify(response)
         else:
             flash('Login failed.', 'auth-failed')
+            return jsonify({'message': 'Login failed'})
     except:
         raise Exception('Error: please check that your form data is correct')
