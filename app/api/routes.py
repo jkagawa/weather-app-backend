@@ -32,17 +32,31 @@ def add_location(current_user_token):
     user_token = current_user_token.token
 
     try:
-        location = Location(name, latitude, longitude, timezone, location_api_id)
-        db.session.add(location)
-        db.session.commit()
+        existing_location = Location.query.filter_by(location_api_id=location_api_id).all()
+        if not existing_location:
+            location = Location(name, latitude, longitude, timezone, location_api_id)
+            db.session.add(location)
+            db.session.commit()
 
-        location_to_save = Location.query.filter_by(location_api_id=location_api_id).all()
-        saved = SavedLocation(user_token, location_to_save[0].id)
-        db.session.add(saved)
-        db.session.commit()
+        location_to_save = Location.query.filter_by(location_api_id=location_api_id).first()
+        existing_save = SavedLocation.query.filter_by(location_id=location_to_save.id).all()
+        if not existing_save:
+            saved = SavedLocation(user_token, location_to_save.id)
+            db.session.add(saved)
+            db.session.commit()
 
-        response = location_schema.dump(location)
-        return jsonify(response)
+        saved = SavedLocation.query.filter_by(user_token=user_token).all()
+        locations = []
+        for s in saved:
+            location = Location.query.filter_by(id=s.location_id).first()
+            if location:
+                locations.append(location)
+        if locations:
+            # Return all saved locations
+            response = location_multi_schema.dump(locations)
+            return jsonify(response)
+        # No saved locations
+        return jsonify({})
     except:
         return jsonify({'message' : 'Failed to add item'}), 500
 
