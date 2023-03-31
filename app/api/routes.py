@@ -65,7 +65,7 @@ def add_location(current_user_token):
 @token_required
 def delete_location(current_user_token, location_id):
     user_token = current_user_token.token
-    saved = SavedLocation.query.filter_by(user_token=user_token, location_id=location_id).all()
+    saved = SavedLocation.query.filter_by(user_token=user_token, location_id=location_id).first()
     if saved:
         db.session.delete(saved)
         db.session.commit()
